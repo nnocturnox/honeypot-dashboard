@@ -1,10 +1,12 @@
+import os
 import socket
 import threading
-import paramiko
 import logging
-from datetime import datetime, timezone
+import httpx
+import paramiko
 
-# Logger configuration
+os.makedirs("logs", exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(message)s",
@@ -15,7 +17,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger("honeypot")
 
-# SSH Server implementation
+BACKEND_URL = "http://localhost:8000/attack"
+
+def send_to_backend(ip, username, password):
+    """Forward captured attack data to FastAPI backend asynchronously."""
+    try:
+        with httpx.Client() as client:
+            client.post(
+                BACKEND_URL,
+                json={
+                    "ip": ip,
+                    "username": username,
+                    "password": password
+                },
+                timeout=5
+            )
+    except Exception as e:
+        logger.error(f"Failed to forward data to backend: {e}")
+
 class HoneypotServer(paramiko.ServerInterface):
     def __init__(self, client_ip):
         self.client_ip = client_ip
@@ -37,25 +56,36 @@ class HoneypotServer(paramiko.ServerInterface):
             f"LOGIN_ATTEMPT | ip={self.client_ip} | "
             f"user={username} | password={password}"
         )
+        thread = threading.Thread(
+            target=send_to_backend,
+            args=(self.client_ip, username, password)
+        )
+        thread.daemon = True
+        thread.start()
+
         return paramiko.AUTH_FAILED
 
-# Generate Host RSA Key
 HOST_KEY = paramiko.RSAKey.generate(2048)
 
-# Connection handler
 def handle_connection(client_socket, client_ip):
+    transport = None
     try:
         transport = paramiko.Transport(client_socket)
         transport.add_server_key(HOST_KEY)
         server = HoneypotServer(client_ip)
         transport.start_server(server=server)
-        transport.accept(20)  # Wait up to 20 seconds for auth attempt
+        
+        # Keep channel open for auth attempts
+        channel = transport.accept(30)
+        if channel is not None:
+            channel.close()
     except Exception as e:
-        logger.debug(f"Connection error from {client_ip}: {e}")
+        logger.debug(f"Session ended for {client_ip}: {e}")
     finally:
+        if transport is not None:
+            transport.close()
         client_socket.close()
 
-# Main listener
 def start_honeypot(host="0.0.0.0", port=2222):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
