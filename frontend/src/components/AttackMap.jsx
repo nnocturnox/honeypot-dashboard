@@ -7,11 +7,11 @@ export default function AttackMap({ attacks }) {
     <MapContainer
       center={[20, 0]}
       zoom={2}
-      style={{ flex: 1, height: "100%", background: "#0d0d1a" }}
+      style={{ flex: 1, height: "100%", background: "#f8f9fa" }}
     >
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       />
       {mapped.map((attack, i) => (
         <CircleMarker
@@ -21,7 +21,7 @@ export default function AttackMap({ attacks }) {
           pathOptions={{
             color: "#e94560",
             fillColor: "#e94560",
-            fillOpacity: 0.7,
+            fillOpacity: 0.8,
           }}
         >
           <Popup>
