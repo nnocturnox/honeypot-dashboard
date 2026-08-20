@@ -33,7 +33,14 @@ const labelStyle = {
 function prepareHourly(attacks) {
   const counts = {};
   attacks.forEach((a) => {
-    const d = new Date(a.timestamp);
+    if (!a.timestamp) return;
+    // Append 'Z' if timestamp is missing ISO UTC indicator
+    const rawTime = String(a.timestamp).endsWith("Z")
+      ? a.timestamp
+      : `${a.timestamp}Z`;
+    const d = new Date(rawTime);
+    if (isNaN(d.getTime())) return;
+
     const key = `${String(d.getHours()).padStart(2, "0")}:00`;
     counts[key] = (counts[key] || 0) + 1;
   });
