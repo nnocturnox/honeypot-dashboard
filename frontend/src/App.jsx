@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import AttackMap from "./components/AttackMap";
 import StatsBar from "./components/StatsBar";
 import AttackFeed from "./components/AttackFeed";
-import Charts from "./components/Charts"; // 1. YENİ IMPORT
+import Charts from "./components/Charts";
 
 const BACKEND = "http://localhost:8000";
 
 export default function App() {
   const [attacks, setAttacks] = useState([]);
-  const [view, setView] = useState("map"); // 2. YENİ STATE ("map" veya "charts")
+  const [view, setView] = useState("map"); // ("map" or "charts")
   const wsRef = useRef(null);
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function App() {
           </span>
         </div>
 
-        {/* 3. YENİ: Sekme Geçiş Butonları */}
+        {/*Tab Switching Buttons*/}
         <div style={{ display: "flex", gap: "8px" }}>
           {[
             { id: "map", label: "🗺️ Map View" },
@@ -95,7 +95,7 @@ export default function App() {
       {/* Stats Summary Bar */}
       <StatsBar attacks={attacks} />
 
-      {/* 4. GÜNCELLENEN: Harita veya Grafik Görünümü */}
+      {/*Map or Chart View*/}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <div style={{ flex: 1, overflow: "auto" }}>
           {view === "map" ? (
